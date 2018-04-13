@@ -84,20 +84,6 @@ lasso.cd <- function(X,y,beta,lambda,tol=1e-6,maxiter=1000,quiet=FALSE){
 ## Basically, the function transforms the x and y matrix and then solves them like lasso
 
 
-## This one centers y and standardizes x
-nothing_but_net = function(x, y, lambda, alpha) {
-  
-  xstandard = scale(x)
-  ystandard = scale(y, scale = FALSE)
-  lamb1 = lambda * alpha 
-  lamb2 = .5*(1-alpha)*lambda 
-  xstar = ((1 +lamb2)**-.5) * rbind(xstandard, (lamb2^.5) * diag(nrow = ncol(x)))
-  ystar = rbind(ystandard, as.matrix(rep(0, ncol(x))))
-  betastar = lasso.cd(xstar, ystar, lambda = lambda, beta = rep(0, ncol(x)))
-  netbeta = ((1 + lamb2)^.5) * betastar$beta
-  return(netbeta)
-  
-}
 
 
 ## This one does not scale x or y
@@ -121,18 +107,19 @@ b1 = NULL
 
 lambdas = c(.01, .1, 1, 10)
 
+
 for(i in 1:length(lambdas)){
   
-  b1 = cbind(b1, nothing_but_net2(x, y, lambdas[i], .95))
+  b1 = cbind(b1, nothing_but_net(x, y, lambdas[i], .95))
   
 }
 
 # glmnet check
-#for(i in 1:length(lambdas)){
-#  fit = glmnet(as.matrix(x), as.matrix(y), lambda = lambdas[i], alpha = 1, standardize = FALSE, intercept = FALSE)
-#  b1 = cbind(b1, as.numeric( coef(fit) )[-1])
-#  
-#}
+for(i in 1:length(lambdas)){
+  fit = glmnet(as.matrix(x), as.matrix(y), lambda = lambdas[i], alpha = 1, standardize = FALSE, intercept = FALSE)
+  b1 = cbind(b1, as.numeric( coef(fit) )[-1])
+  
+}
 
 ## Prepare for export
 b1 = as.data.frame(b1)
